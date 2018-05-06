@@ -5,17 +5,17 @@ defmodule TeleporterTest do
 
   test "Add a route to empty portal" do
     route = Teleporter.add_route(%{}, "Washington", "Atlanta")
-    assert route == %{"Washington" => ["Atlanta"], "Atlanta" => ["Washington"]}
+    assert route == %{"Washington" => ["Atlanta"], "Atlanta" => ["Washington"], "cities" => ["Atlanta", "Washington"]}
   end
 
   test "Add a route to existing portal, non-existing key" do
-    route = Teleporter.add_route(%{"Baltimore" => ["Philadelphia"], "Philadelphia" => "Baltimore"}, "Washington", "Atlanta")
-    assert route == %{"Washington" => ["Atlanta"], "Atlanta" => ["Washington"], "Baltimore" => ["Philadelphia"], "Philadelphia" => "Baltimore"}
+    route = Teleporter.add_route(%{"Baltimore" => ["Philadelphia"], "Philadelphia" => ["Baltimore"], "cities" => ["Baltimore", "Philadelphia"]}, "Washington", "Atlanta")
+    assert route == %{"Washington" => ["Atlanta"], "Atlanta" => ["Washington"], "Baltimore" => ["Philadelphia"], "Philadelphia" => ["Baltimore"], "cities" => ["Atlanta", "Baltimore", "Philadelphia", "Washington"]}
   end
 
   test "Add a route to existing portal, existing key" do
-    route = Teleporter.add_route(%{"Washington" => ["Baltimore"], "Baltimore" => ["Washington"]}, "Washington", "Atlanta")
-    assert route == %{"Washington" => ["Atlanta", "Baltimore"], "Baltimore" => ["Washington"], "Atlanta" => ["Washington"]}
+    route = Teleporter.add_route(%{"Washington" => ["Baltimore"], "Baltimore" => ["Washington"], "cities" => ["Baltimore", "Washington"]}, "Washington", "Atlanta")
+    assert route == %{"Washington" => ["Atlanta", "Baltimore"], "Baltimore" => ["Washington"], "Atlanta" => ["Washington"], "cities" => ["Atlanta", "Baltimore", "Washington"]}
   end
 
   test "Add full teleport route system" do
@@ -39,7 +39,7 @@ defmodule TeleporterTest do
       "Oakland" => ["Los Angeles", "San Francisco"],
       "Philadelphia" => ["New York", "Baltimore"],
       "San Francisco" => ["Oakland", "Los Angeles"],
-      "Seattle" => ["Baltimore", "New York"]}
+      "Seattle" => ["Baltimore", "New York"], "cities" => ["Atlanta", "Baltimore", "Los Angeles", "New York", "Oakland", "Philadelphia", "San Francisco", "Seattle", "Washington"]}
 
     assert expected_complete_routes == generated_routes
 
@@ -49,7 +49,8 @@ defmodule TeleporterTest do
     routes = %{
       "Atlanta" => ["Washington"],
       "Baltimore" => ["Washington"],
-      "Washington" => ["Atlanta", "Baltimore"]
+      "Washington" => ["Atlanta", "Baltimore"],
+      "cities" => ["Atlanta", "Baltimore", "Washington"]
     }
 
     assert Teleporter.teleport_options_with_jump_count(routes, "Washington", 1) == ["Atlanta", "Baltimore"]
@@ -65,7 +66,8 @@ defmodule TeleporterTest do
       "Oakland" => ["Los Angeles", "San Francisco"],
       "Philadelphia" => ["New York", "Baltimore"],
       "San Francisco" => ["Oakland", "Los Angeles"],
-      "Seattle" => ["Baltimore", "New York"]}
+      "Seattle" => ["Baltimore", "New York"],
+      "cities" => ["Atlanta", "Baltimore", "Los Angeles", "New York", "Oakland", "Philadelphia", "San Francisco", "Seattle", "Washington"]}
 
     assert Teleporter.teleport_options_with_jump_count(routes, "Seattle", 1) == ["Baltimore", "New York"]
   end
@@ -80,8 +82,25 @@ defmodule TeleporterTest do
       "Oakland" => ["Los Angeles", "San Francisco"],
       "Philadelphia" => ["New York", "Baltimore"],
       "San Francisco" => ["Oakland", "Los Angeles"],
-      "Seattle" => ["Baltimore", "New York"]}
+      "Seattle" => ["Baltimore", "New York"],
+      "cities" => ["Atlanta", "Baltimore", "Los Angeles", "New York", "Oakland", "Philadelphia", "San Francisco", "Seattle", "Washington"]}
 
     assert Teleporter.teleport_options_with_jump_count(routes, "Seattle", 2) == ["Baltimore", "New York", "Philadelphia", "Washington"]
+  end
+
+  test "Can I hop to city from a starting city" do
+   routes = %{
+      "Atlanta" => ["Washington"],
+      "Washington" => ["Atlanta", "Baltimore"],
+      "Baltimore" => ["Seattle", "Philadelphia", "Washington"],
+      "Los Angeles" => ["Oakland", "San Francisco"],
+      "New York" => ["Seattle", "Philadelphia"],
+      "Oakland" => ["Los Angeles", "San Francisco"],
+      "Philadelphia" => ["New York", "Baltimore"],
+      "San Francisco" => ["Oakland", "Los Angeles"],
+      "Seattle" => ["Baltimore", "New York"],
+      "cities" => ["Atlanta", "Baltimore", "Los Angeles", "New York", "Oakland", "Philadelphia", "San Francisco", "Seattle", "Washington"]}
+
+    assert Teleporter.can_beam_to_city?(routes, "New York", "Atlanta") == true
   end
 end
