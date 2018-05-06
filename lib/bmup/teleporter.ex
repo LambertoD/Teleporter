@@ -4,21 +4,18 @@ defmodule Bmup.Teleporter do
 
     route1 = map_adder(%{}, key, [value])
     route2 = map_adder(%{}, value, [key])
-    # cities = MapSet.new |> MapSet.put(key) |> MapSet.put(value)
     cities = [key, value] |> Enum.sort
     lines = cities |> check_lines(current_routes)
-    # lines = update_lines(current_routes["lines"], cities, current_routes)
 
-    new_routes =
-      Map.merge(route1, route2, &map_merger/3)
-      |> Map.merge(current_routes, &map_merger/3)
-      |> add_cities(cities)
-      |> add_lines(lines)
+    Map.merge(route1, route2, &map_merger/3)
+    |> Map.merge(current_routes, &map_merger/3)
+    |> add_cities(cities)
+    |> add_lines(lines)
   end
 
   def check_lines(city_list, routes) do
     if Map.has_key?(routes, "lines") do
-      update_lines(routes["lines"], city_list, routes)
+      update_lines(routes["lines"], city_list)
     else
       %{"1" => city_list}
     end
@@ -44,7 +41,7 @@ defmodule Bmup.Teleporter do
     into
     %{"1" => ["Atlanta", "Baltimore", " "Washington", "Philadelphia"],
   """
-  def update_lines(lines, city_list, routes) do
+  def update_lines(lines, city_list) do
     # use reduce to make lines,  use MapSet as function helper
     lines
     |> Map.values
@@ -76,33 +73,6 @@ defmodule Bmup.Teleporter do
       end
     end
   end
-
-# Enum.reduce(lines, %{}, fn x, lines -> recreate_lines.(x, c, lines) end)
-# recreate_lines = fn route_line, cities, lines ->
-#     if MapSet.disjoint?(MapSet.new(route_line), MapSet.new(cities)) do
-#       if Enum.empty? lines do
-#         Map.put_new(lines, "1", route_line)
-#         |> Map.put_new("2", cities)
-#       else
-#        last_key = Map.keys(lines) |> List.last
-#        new_key = (String.to_integer(last_key) + 1) |> Integer.to_string
-#        Map.put_new(lines, new_key, route_line)
-#       end
-#     else
-#       if Enum.empty? lines do
-#        new_line =
-#         MapSet.union(MapSet.new(route_line), MapSet.new(cities))
-#         |> MapSet.to_list
-#        Map.put_new(lines, "1", new_line)
-#       else
-#         current_routes = Map.values(lines) |> List.flatten
-#          new_line =
-#           MapSet.union(MapSet.new(current_routes), MapSet.new(route_line))
-#           |> MapSet.to_list
-#          %{ lines | "1" => new_line}
-#       end
-#     end
-#   end
 
   def add_cities(routes, cities) do
     if Map.has_key?(routes, "cities") do
@@ -146,7 +116,7 @@ defmodule Bmup.Teleporter do
     all_hops = routes[city] ++ next_hops
     List.flatten(all_hops)
     |> Enum.uniq
-    |> Kernel.-- [city]
+    |> (Kernel.-- [city])
   end
 
   def can_beam_to_city?(routes, current_city, desired_city) do
