@@ -42,6 +42,11 @@ defmodule Bmup.Teleporter do
     %{"1" => ["Atlanta", "Baltimore", " "Washington", "Philadelphia"],
   """
   def update_lines(lines, city_list) do
+    # mark current lines that have common members with city list
+    marked_lines =
+      Enum.map(lines, fn {k,v} -> city_list_in_current_lines({k,v}, city_list) )
+
+
     # use reduce to make lines,  use MapSet as function helper
     lines
     |> Map.values
@@ -71,6 +76,14 @@ defmodule Bmup.Teleporter do
           |> MapSet.to_list
          %{ lines | "1" => new_line}
       end
+    end
+  end
+
+  def city_list_in_current_lines({key, cities_in_line}, city_list) do
+    if MapSet.disjoint?(MapSet.new(cities_in_line), MapSet.new(city_list)) do
+      {:no_match, key}
+    else
+      {:match, key}
     end
   end
 
