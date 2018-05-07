@@ -15,21 +15,21 @@ defmodule Bmup.Teleporter do
 
   def check_lines(city_list, routes) do
     if Map.has_key?(routes, "port_routes") do
-      update_lines(routes["port_routes"], city_list)
+      update_port_routes(routes["port_routes"], city_list)
     else
       %{"1" => city_list}
     end
   end
 
   @doc """
-    Check all existing lines and re-create as necessary as
+    Check all existing port_routes and re-create as necessary as
     new connections are made between cities.
-    If cities in city_list are not found in existing lines then
-    a new line is created for that city_list.
-    If cities in city_list are found in existing lines then
-    the line is updated to include cities in city_list.
-    If cities in city_list are found separately in other lines then
-    the 2 lines are merged into 1 line.
+    If cities in city_list are not found in existing port_routes then
+    a new port_route is created for that city_list.
+    If cities in city_list are found in existing port_routes then
+    the port_route is updated to include cities in city_list.
+    If cities in city_list are found separately in other port_routes then
+    the 2 port_routes are merged into 1 port_route.
 
     [["Atlanta", "Washington"], ["Baltimore", "Philadelphia"]]
     into
@@ -41,10 +41,11 @@ defmodule Bmup.Teleporter do
     into
     %{"1" => ["Atlanta", "Baltimore", " "Washington", "Philadelphia"],
   """
-  def update_lines(lines, city_list) do
-    # mark current lines that have common members with city list
-    marked_lines =
-      Enum.map(lines, fn {k,v} -> city_list_in_current_lines({k,v}, city_list) end)
+  def update_port_routes(port_routes, city_list) do
+    # mark current routes that have common members with city list
+    marked_routes =
+      Enum.map(port_routes, fn {k,v} -> cities_in_current_port_routes({k,v}, city_list) end)
+
 
 
     # use reduce to make lines,  use MapSet as function helper
@@ -79,11 +80,12 @@ defmodule Bmup.Teleporter do
     end
   end
 
-  def city_list_in_current_lines({key, cities_in_line}, city_list) do
-    if MapSet.disjoint?(MapSet.new(cities_in_line), MapSet.new(city_list)) do
-      {:no_match, key}
+  def cities_in_current_port_routes({key, value}, city_list) do
+    if MapSet.disjoint?(MapSet.new(value.route_path), MapSet.new(city_list)) do
+      updated_route = Map.new([{:route_path, value.route_path}, {:status, :match}]) 
+      Map.new([{key, updated_route}])
     else
-      {:match, key}
+      Map.new([{key, value}])
     end
   end
 
