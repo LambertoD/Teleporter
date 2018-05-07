@@ -1,21 +1,21 @@
 defmodule Bmup.Teleporter do
 
-  def add_route(current_routes, key, value ) do
+  def add_route(port_system, key, value ) do
 
     route1 = map_adder(%{}, key, [value])
     route2 = map_adder(%{}, value, [key])
-    cities = [key, value] |> Enum.sort
-    lines = cities |> check_lines(current_routes)
+    cities_in_system = [key, value] |> Enum.sort
+    port_routes = cities_in_system |> check_lines(port_system)
 
     Map.merge(route1, route2, &map_merger/3)
-    |> Map.merge(current_routes, &map_merger/3)
-    |> add_cities(cities)
-    |> add_lines(lines)
+    |> Map.merge(port_system, &map_merger/3)
+    |> add_cities(cities_in_system)
+    |> add_port_routes(port_routes)
   end
 
   def check_lines(city_list, routes) do
-    if Map.has_key?(routes, "lines") do
-      update_lines(routes["lines"], city_list)
+    if Map.has_key?(routes, "port_routes") do
+      update_lines(routes["port_routes"], city_list)
     else
       %{"1" => city_list}
     end
@@ -44,7 +44,7 @@ defmodule Bmup.Teleporter do
   def update_lines(lines, city_list) do
     # mark current lines that have common members with city list
     marked_lines =
-      Enum.map(lines, fn {k,v} -> city_list_in_current_lines({k,v}, city_list) )
+      Enum.map(lines, fn {k,v} -> city_list_in_current_lines({k,v}, city_list) end)
 
 
     # use reduce to make lines,  use MapSet as function helper
@@ -87,22 +87,23 @@ defmodule Bmup.Teleporter do
     end
   end
 
-  def add_cities(routes, cities) do
-    if Map.has_key?(routes, "cities") do
-      # updated_cities = MapSet.put(MapSet.new(routes["cities"]), cities)
-      updated_cities = [cities | routes["cities"]]
-        |> List.flatten |> Enum.uniq |> Enum.sort
-      %{routes | "cities" => updated_cities}
+  def add_cities(port_system, cities) do
+    if Map.has_key?(port_system, "cities_in_system") do
+      updated_cities = 
+        MapSet.put(MapSet.new(port_system["cities_in_system"]), cities)
+        |> MapSet.to_list |> List.flatten |> Enum.sort
+
+      %{port_system | "cities_in_system" => updated_cities}
     else
-      Map.put(routes, "cities", cities)
+      Map.put(port_system, "cities_in_system", cities)
     end
   end
 
-  def add_lines(routes, lines) do
-    if Map.has_key?(routes, "lines") do
-      %{routes | "lines" => lines}
+  def add_port_routes(routes, port_routes) do
+    if Map.has_key?(routes, "port_routes") do
+      %{routes | "port_routes" => port_routes}
     else
-      Map.put(routes, "lines", lines)
+      Map.put(routes, "port_routes", port_routes)
     end
   end
 
