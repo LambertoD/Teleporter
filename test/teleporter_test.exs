@@ -30,48 +30,48 @@ defmodule TeleporterTest do
     }
   end
 
-  # test "Add a route to existing portal, existing key" do
-  #   route = Teleporter.add_route(%{"Washington" => ["Baltimore"], "Baltimore" => ["Washington"], 
-  #     "cities_in_system" => ["Baltimore", "Washington"],
-  #     "port_routes" => %{"1" => %{route_path: ["Baltimore", "Washington"]}}}, 
-  #     "Washington", "Atlanta")
+  test "Add a route to existing portal, existing key" do
+    route = Teleporter.add_route(%{"Washington" => ["Baltimore"], "Baltimore" => ["Washington"], 
+      "cities_in_system" => ["Baltimore", "Washington"],
+      "port_routes" => %{"1" => %{route_path: ["Baltimore", "Washington"]}}}, 
+      "Washington", "Atlanta")
 
-  #   assert route == %{
-  #     "Washington" => ["Atlanta", "Baltimore"],
-  #     "Baltimore" => ["Washington"],
-  #     "Atlanta" => ["Washington"],
-  #     "cities" => ["Atlanta", "Baltimore", "Washington"],
-  #     "port_routes" => %{"1" => %{route_path: ["Atlanta", "Baltimore",  "Philadelphia"]}}
-  #     }
-  # end
+    assert route == %{
+      "Washington" => ["Atlanta", "Baltimore"],
+      "Baltimore" => ["Washington"],
+      "Atlanta" => ["Washington"],
+      "cities_in_system" => ["Atlanta", "Baltimore", "Washington"],
+      "port_routes" => %{"1" => %{route_path: ["Atlanta", "Baltimore", "Washington"]}}
+      }
+  end
 
-  # test "Add full teleport route system" do
-  #   generated_routes =
-  #   Teleporter.add_route(%{}, "Washington", "Baltimore")
-  #   |> Teleporter.add_route("Washington", "Atlanta")
-  #   |> Teleporter.add_route("Baltimore", "Philadelphia")
-  #   |> Teleporter.add_route("Philadelphia", "New York")
-  #   |> Teleporter.add_route("Los Angeles", "San Francisco")
-  #   |> Teleporter.add_route("San Francisco", "Oakland")
-  #   |> Teleporter.add_route("Los Angeles", "Oakland")
-  #   |> Teleporter.add_route("Seattle", "New York")
-  #   |> Teleporter.add_route("Seattle", "Baltimore")
+  test "Add full teleport route system" do
+    generated_routes =
+    Teleporter.add_route(%{}, "Washington", "Baltimore")
+    |> Teleporter.add_route("Washington", "Atlanta")
+    |> Teleporter.add_route("Baltimore", "Philadelphia")
+    |> Teleporter.add_route("Philadelphia", "New York")
+    |> Teleporter.add_route("Los Angeles", "San Francisco")
+    |> Teleporter.add_route("San Francisco", "Oakland")
+    |> Teleporter.add_route("Los Angeles", "Oakland")
+    |> Teleporter.add_route("Seattle", "New York")
+    |> Teleporter.add_route("Seattle", "Baltimore")
 
-  #   expected_complete_routes = %{
-  #     "Atlanta" => ["Washington"],
-  #     "Washington" => ["Atlanta", "Baltimore"],
-  #     "Baltimore" => ["Seattle", "Philadelphia", "Washington"],
-  #     "Los Angeles" => ["Oakland", "San Francisco"],
-  #     "New York" => ["Seattle", "Philadelphia"],
-  #     "Oakland" => ["Los Angeles", "San Francisco"],
-  #     "Philadelphia" => ["New York", "Baltimore"],
-  #     "San Francisco" => ["Oakland", "Los Angeles"],
-  #     "Seattle" => ["Baltimore", "New York"],
-  #     "cities" => ["Atlanta", "Baltimore", "Los Angeles", "New York", "Oakland", "Philadelphia", "San Francisco", "Seattle", "Washington"]}
+    expected_complete_routes = %{
+      "Atlanta" => ["Washington"],
+      "Washington" => ["Atlanta", "Baltimore"],
+      "Baltimore" => ["Seattle", "Philadelphia", "Washington"],
+      "Los Angeles" => ["Oakland", "San Francisco"],
+      "New York" => ["Seattle", "Philadelphia"],
+      "Oakland" => ["Los Angeles", "San Francisco"],
+      "Philadelphia" => ["New York", "Baltimore"],
+      "San Francisco" => ["Oakland", "Los Angeles"],
+      "Seattle" => ["Baltimore", "New York"],
+      "cities" => ["Atlanta", "Baltimore", "Los Angeles", "New York", "Oakland", "Philadelphia", "San Francisco", "Seattle", "Washington"]}
 
-  #   assert expected_complete_routes == generated_routes
+    assert expected_complete_routes == generated_routes
 
-  # end
+  end
 
   # test "Get 1 jump hop route" do
   #   routes = %{

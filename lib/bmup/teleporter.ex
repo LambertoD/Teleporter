@@ -64,12 +64,13 @@ defmodule Bmup.Teleporter do
 
   def merge_cities({[k],[v]}, acc, city_list) do
     current_map = Map.new([{k, v}])
+    # IO.puts "In merged_cities: acc #{inspect acc}\nkey: #{inspect k}\nvalue: #{inspect v}\ncities: #{inspect city_list}"
     if v.status == :match do
       new_route_path = MapSet.union(MapSet.new(v.route_path), MapSet.new(city_list))
         |> MapSet.to_list 
 
       {acc_route_path, key_values} = 
-          if Enum.empty? acc or map_marked_matched?(acc) do
+          if Enum.empty?(acc) or map_marked_matched?(acc) do
             {new_route_path, [k]}
           else
             {_, temp_value} = 
@@ -108,10 +109,8 @@ defmodule Bmup.Teleporter do
 
   def add_cities(port_system, cities) do
     if Map.has_key?(port_system, "cities_in_system") do
-      updated_cities = 
-        MapSet.put(MapSet.new(port_system["cities_in_system"]), cities)
-        |> MapSet.to_list |> List.flatten |> Enum.sort
-
+      updated_cities = [cities | port_system["cities_in_system"]]
+        |> List.flatten |> Enum.uniq |> Enum.sort
       %{port_system | "cities_in_system" => updated_cities}
     else
       Map.put(port_system, "cities_in_system", cities)
