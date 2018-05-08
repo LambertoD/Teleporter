@@ -43,11 +43,11 @@ defmodule Bmup.Teleporter do
   """
   def update_port_routes(port_routes, city_list) do
     # mark current routes that have common members with city list
-    IO.puts "\nBEFORE marking routes:  #{inspect port_routes}   cities: #{inspect city_list}"
+    # IO.puts "\nBEFORE marking routes:  #{inspect port_routes}   cities: #{inspect city_list}"
     marked_routes =
       Enum.map(port_routes, fn {k,v} -> cities_in_current_port_routes({k,v}, city_list) end)
 
-    IO.puts "\nAFTER marking routes:  #{inspect marked_routes}"
+    # IO.puts "\nAFTER marking routes:  #{inspect marked_routes}"
     # based on marked routes, merge those that are matching    
     merged_routes =
       Enum.reduce(marked_routes, 
@@ -57,6 +57,7 @@ defmodule Bmup.Teleporter do
                   end)
     # IO.puts "\nAFTER merging routes:  #{inspect merged_routes}"
     # trim temporary keys in port_routes
+    Enum.reduce(merged_routes, %{}, fn({k,v}, acc) -> trim_route(k,v,acc) end)
 
   end
 
@@ -108,6 +109,11 @@ defmodule Bmup.Teleporter do
 
   defp map_marked_matched?(map) do
     map |> Map.values |> Enum.all?(fn y -> y.status == :nil end)
+  end
+
+  defp trim_route(k, v, acc) do
+    route_path_map = Map.new([{:route_path, v.route_path}])
+    Map.put(acc, k, route_path_map)
   end
 
   def add_cities(port_system, cities) do
