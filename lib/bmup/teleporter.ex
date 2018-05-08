@@ -17,7 +17,7 @@ defmodule Bmup.Teleporter do
     if Map.has_key?(routes, "port_routes") do
       update_port_routes(routes["port_routes"], city_list)
     else
-      %{"1" => city_list}
+      %{"1" => %{route_path: city_list}}
     end
   end
 
@@ -43,30 +43,37 @@ defmodule Bmup.Teleporter do
   """
   def update_port_routes(port_routes, city_list) do
     # mark current routes that have common members with city list
+    IO.puts "\nBEFORE marking routes:  #{inspect port_routes}   cities: #{inspect city_list}"
     marked_routes =
       Enum.map(port_routes, fn {k,v} -> cities_in_current_port_routes({k,v}, city_list) end)
+
+    IO.puts "\nAFTER marking routes:  #{inspect marked_routes}"
     # based on marked routes, merge those that are matching    
-    merged_matched_routes =
+    merged_routes =
       Enum.reduce(marked_routes, 
                   %{}, 
                   fn(x, acc) -> 
                      merge_cities({Map.keys(x),Map.values(x)}, acc, city_list) 
                   end)
+    # IO.puts "\nAFTER merging routes:  #{inspect merged_routes}"
     # trim temporary keys in port_routes
 
   end
 
   def cities_in_current_port_routes({key, value}, city_list) do
     if MapSet.disjoint?(MapSet.new(value.route_path), MapSet.new(city_list)) do
-      Map.new([{key, value}])
+      nil_matched_route = Map.new([{:route_path, value.route_path}, {:status, nil}]) 
+      Map.new([{key, nil_matched_route}])
     else
-      updated_route = Map.new([{:route_path, value.route_path}, {:status, :match}]) 
-      Map.new([{key, updated_route}])
+      matched_route = Map.new([{:route_path, value.route_path}, {:status, :match}]) 
+      Map.new([{key, matched_route}])
     end
   end
 
   def merge_cities({[k],[v]}, acc, city_list) do
+    # IO.puts "INPUT: acc #{inspect acc}\n keys: #{inspect k}\n values: #{inspect v} \n cities: #{inspect city_list}"
     current_map = Map.new([{k, v}])
+    # IO.puts "current map is: #{inspect current_map}\n"
     if v.status == :match do
       new_route_path = MapSet.union(MapSet.new(v.route_path), MapSet.new(city_list))
         |> MapSet.to_list 
@@ -92,7 +99,10 @@ defmodule Bmup.Teleporter do
 
       Map.put(acc, new_key, route_map)
     else
-      current_map
+      next_key = Map.keys(current_map) |> List.to_string |> String.to_integer
+                 |> (Kernel.+ 1) |> Integer.to_string
+      route_path = Map.new([{:route_path, city_list}, {:status, nil}])
+      Map.put(current_map, next_key, route_path)
     end
   end 
 
