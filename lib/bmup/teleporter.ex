@@ -45,48 +45,59 @@ defmodule Bmup.Teleporter do
     # mark current routes that have common members with city list
     marked_routes =
       Enum.map(port_routes, fn {k,v} -> cities_in_current_port_routes({k,v}, city_list) end)
+    # based on marked routes, merge those that are matching    
+    merged_matched_routes =
+      Enum.reduce(marked_routes, 
+                  %{}, 
+                  fn(x, acc) -> 
+                     merge_cities({Map.keys(x),Map.values(x)}, acc, city_list) 
+                  end)
+    # trim temporary keys in port_routes
 
-
-
-    # use reduce to make lines,  use MapSet as function helper
-    lines
-    |> Map.values
-    |> Enum.reduce(%{}, fn(x, line_map) -> recreate_lines(x, city_list, line_map) end )
-  end
-
-  def recreate_lines(route_line, cities, lines) do
-    if MapSet.disjoint?(MapSet.new(route_line), MapSet.new(cities)) do
-      if Enum.empty? lines do
-        Map.put_new(lines, "1", route_line)
-        |> Map.put_new("2", cities)
-      else
-       last_key = Map.keys(lines) |> List.last
-       new_key = (String.to_integer(last_key) + 1) |> Integer.to_string
-       Map.put_new(lines, new_key, route_line)
-      end
-    else
-      if Enum.empty? lines do
-       new_line =
-        MapSet.union(MapSet.new(route_line), MapSet.new(cities))
-        |> MapSet.to_list
-       Map.put_new(lines, "1", new_line)
-      else
-        current_routes = Map.values(lines) |> List.flatten
-         new_line =
-          MapSet.union(MapSet.new(current_routes), MapSet.new(route_line))
-          |> MapSet.to_list
-         %{ lines | "1" => new_line}
-      end
-    end
   end
 
   def cities_in_current_port_routes({key, value}, city_list) do
     if MapSet.disjoint?(MapSet.new(value.route_path), MapSet.new(city_list)) do
+      Map.new([{key, value}])
+    else
       updated_route = Map.new([{:route_path, value.route_path}, {:status, :match}]) 
       Map.new([{key, updated_route}])
-    else
-      Map.new([{key, value}])
     end
+  end
+
+  def merge_cities({[k],[v]}, acc, city_list) do
+    current_map = Map.new([{k, v}])
+    if v.status == :match do
+      new_route_path = MapSet.union(MapSet.new(v.route_path), MapSet.new(city_list))
+        |> MapSet.to_list 
+
+      {acc_route_path, key_values} = 
+          if Enum.empty? acc or map_marked_matched?(acc) do
+            {new_route_path, [k]}
+          else
+            {_, temp_value} = 
+              Enum.filter(acc, fn {acc_key, acc_value} -> acc_value.status == :match end)
+              |> List.first
+
+            key_list = [k|temp_value.key_values]
+            route_path = 
+              MapSet.union(MapSet.new(new_route_path), MapSet.new(temp_value.route_path))
+              |> MapSet.to_list
+          end
+
+      route_map = Map.new([{:route_path, acc_route_path},
+                           {:status, :match}, 
+                           {:key_values, key_values}])
+      new_key = Enum.sort(key_values) |> List.first
+
+      Map.put(acc, new_key, route_map)
+    else
+      current_map
+    end
+  end 
+
+  defp map_marked_matched?(map) do
+    map |> Map.values |> Enum.all?(fn y -> y.status == :nil end)
   end
 
   def add_cities(port_system, cities) do
