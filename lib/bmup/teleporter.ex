@@ -43,21 +43,12 @@ defmodule Bmup.Teleporter do
   """
   def update_port_routes(port_routes, city_list) do
     # mark current routes that have common members with city list
-    # IO.puts "\nBEFORE marking routes:  #{inspect port_routes}   cities: #{inspect city_list}"
-    marked_routes =
-      Enum.map(port_routes, fn {k,v} -> cities_in_current_port_routes({k,v}, city_list) end)
-
-    # IO.puts "\nAFTER marking routes:  #{inspect marked_routes}"
-    # based on marked routes, merge those that are matching    
-    merged_routes =
-      Enum.reduce(marked_routes, 
-                  %{}, 
-                  fn(x, acc) -> 
-                     merge_cities({Map.keys(x),Map.values(x)}, acc, city_list) 
-                  end)
-    # IO.puts "\nAFTER merging routes:  #{inspect merged_routes}"
-    # trim temporary keys in port_routes
-    Enum.reduce(merged_routes, %{}, fn({k,v}, acc) -> trim_route(k,v,acc) end)
+    # then, based on marked routes, merge those that are matching    
+    # then, trim temporary keys in port_routes
+    Enum.map(port_routes, fn {k,v} -> cities_in_current_port_routes({k,v}, city_list) end)
+    |> Enum.reduce(%{}, fn(x, acc) ->
+                           merge_cities({Map.keys(x),Map.values(x)}, acc, city_list) end)
+    |> Enum.reduce(%{}, fn({k,v}, acc) -> trim_route(k,v,acc) end)
 
   end
 
@@ -72,9 +63,7 @@ defmodule Bmup.Teleporter do
   end
 
   def merge_cities({[k],[v]}, acc, city_list) do
-    # IO.puts "INPUT: acc #{inspect acc}\n keys: #{inspect k}\n values: #{inspect v} \n cities: #{inspect city_list}"
     current_map = Map.new([{k, v}])
-    # IO.puts "current map is: #{inspect current_map}\n"
     if v.status == :match do
       new_route_path = MapSet.union(MapSet.new(v.route_path), MapSet.new(city_list))
         |> MapSet.to_list 
@@ -84,13 +73,14 @@ defmodule Bmup.Teleporter do
             {new_route_path, [k]}
           else
             {_, temp_value} = 
-              Enum.filter(acc, fn {acc_key, acc_value} -> acc_value.status == :match end)
+              Enum.filter(acc, fn {_acc_key, acc_value} -> acc_value.status == :match end)
               |> List.first
 
             key_list = [k|temp_value.key_values]
             route_path = 
               MapSet.union(MapSet.new(new_route_path), MapSet.new(temp_value.route_path))
               |> MapSet.to_list
+            {route_path, key_list}
           end
 
       route_map = Map.new([{:route_path, acc_route_path},
