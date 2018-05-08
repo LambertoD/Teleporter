@@ -152,10 +152,10 @@ defmodule Bmup.Teleporter do
   end
 
   def can_beam_to_city?(routes, current_city, desired_city) do
-    # search routes =>  recurse through get_hops until end
-    # build route path
     # Enum.member?(full_route, desired_city)
-    true
+    # TODO:   search routes["port_routes"] for current city
+    #   then, search if desired_city is member of that list
+
   end
 
   defp map_merger(_k, v1, v2) do
