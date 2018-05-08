@@ -16,7 +16,8 @@ defmodule TeleporterTest do
   test "Add a route to existing portal, non-existing key" do
     route = Teleporter.add_route(%{"Baltimore" => ["Philadelphia"], "Philadelphia" => ["Baltimore"],
       "cities_in_system" => ["Baltimore", "Philadelphia"],
-      "port_routes" => %{"1" => %{route_path: ["Baltimore", "Philadelphia"]}}}, "Atlanta", "Washington"
+      "port_routes" => %{"1" => %{route_path: ["Baltimore", "Philadelphia"]}}}, 
+      "Atlanta", "Washington"
       )
     assert route == %{
       "Washington" => ["Atlanta"],
@@ -30,12 +31,18 @@ defmodule TeleporterTest do
   end
 
   # test "Add a route to existing portal, existing key" do
-  #   route = Teleporter.add_route(%{"Washington" => ["Baltimore"], "Baltimore" => ["Washington"], "cities" => ["Baltimore", "Washington"]}, "Washington", "Atlanta")
+  #   route = Teleporter.add_route(%{"Washington" => ["Baltimore"], "Baltimore" => ["Washington"], 
+  #     "cities_in_system" => ["Baltimore", "Washington"],
+  #     "port_routes" => %{"1" => %{route_path: ["Baltimore", "Washington"]}}}, 
+  #     "Washington", "Atlanta")
+
   #   assert route == %{
   #     "Washington" => ["Atlanta", "Baltimore"],
   #     "Baltimore" => ["Washington"],
   #     "Atlanta" => ["Washington"],
-  #     "cities" => ["Atlanta", "Baltimore", "Washington"]}
+  #     "cities" => ["Atlanta", "Baltimore", "Washington"],
+  #     "port_routes" => %{"1" => %{route_path: ["Atlanta", "Baltimore",  "Philadelphia"]}}
+  #     }
   # end
 
   # test "Add full teleport route system" do
