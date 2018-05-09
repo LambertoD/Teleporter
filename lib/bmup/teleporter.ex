@@ -43,7 +43,7 @@ defmodule Bmup.Teleporter do
   """
   def update_port_routes(port_routes, city_list) do
     # mark current routes that have common members with city list
-    # then, based on marked routes, merge those that are matching    
+    # then, based on marked routes, merge those that are matching
     # then, trim temporary keys in port_routes
     Enum.map(port_routes, fn {k,v} -> cities_in_current_port_routes({k,v}, city_list) end)
     |> Enum.reduce(%{}, fn(x, acc) ->
@@ -54,10 +54,10 @@ defmodule Bmup.Teleporter do
 
   def cities_in_current_port_routes({key, value}, city_list) do
     if MapSet.disjoint?(MapSet.new(value.route_path), MapSet.new(city_list)) do
-      nil_matched_route = Map.new([{:route_path, value.route_path}, {:status, nil}]) 
+      nil_matched_route = Map.new([{:route_path, value.route_path}, {:status, nil}])
       Map.new([{key, nil_matched_route}])
     else
-      matched_route = Map.new([{:route_path, value.route_path}, {:status, :match}]) 
+      matched_route = Map.new([{:route_path, value.route_path}, {:status, :match}])
       Map.new([{key, matched_route}])
     end
   end
@@ -67,25 +67,25 @@ defmodule Bmup.Teleporter do
     # IO.puts "In merged_cities: acc #{inspect acc}\nkey: #{inspect k}\nvalue: #{inspect v}\ncities: #{inspect city_list}"
     if v.status == :match do
       new_route_path = MapSet.union(MapSet.new(v.route_path), MapSet.new(city_list))
-        |> MapSet.to_list 
+        |> MapSet.to_list
 
-      {acc_route_path, key_values} = 
+      {acc_route_path, key_values} =
           if Enum.empty?(acc) or map_marked_matched?(acc) do
             {new_route_path, [k]}
           else
-            {_, temp_value} = 
+            {_, temp_value} =
               Enum.filter(acc, fn {_acc_key, acc_value} -> acc_value.status == :match end)
               |> List.first
 
             key_list = [k|temp_value.key_values]
-            route_path = 
+            route_path =
               MapSet.union(MapSet.new(new_route_path), MapSet.new(temp_value.route_path))
               |> MapSet.to_list
             {route_path, key_list}
           end
 
       route_map = Map.new([{:route_path, acc_route_path},
-                           {:status, :match}, 
+                           {:status, :match},
                            {:key_values, key_values}])
       new_key = Enum.sort(key_values) |> List.first
 
@@ -96,7 +96,7 @@ defmodule Bmup.Teleporter do
       route_path = Map.new([{:route_path, city_list}, {:status, nil}])
       Map.put(current_map, next_key, route_path)
     end
-  end 
+  end
 
   defp map_marked_matched?(map) do
     map |> Map.values |> Enum.all?(fn y -> y.status == :nil end)
@@ -152,10 +152,18 @@ defmodule Bmup.Teleporter do
   end
 
   def can_beam_to_city?(routes, current_city, desired_city) do
-    # Enum.member?(full_route, desired_city)
-    # TODO:   search routes["port_routes"] for current city
-    #   then, search if desired_city is member of that list
+    cities = routes["port_routes"] |> Enum.map fn {k,v} -> v.route_path end
+    results = route_finder(cities, current_city, desired_city)
+    true in results
+  end
 
+  def route_finder(city_list, current_city, desired_city) do
+    city_list |> Enum.map(fn x -> city_found?(x, current_city, desired_city) end)
+  end
+
+  def city_found?(city_list, current_city, desired_city) do
+      MapSet.member?(MapSet.new(city_list), current_city) and
+      MapSet.member?(MapSet.new(city_list), desired_city)
   end
 
   defp map_merger(_k, v1, v2) do
