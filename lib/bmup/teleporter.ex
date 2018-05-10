@@ -133,28 +133,92 @@ defmodule Bmup.Teleporter do
     end
   end
 
-  def get_hops(routes, city) do
-    next_hops =
-      routes[city] |> Enum.map(fn hop -> routes[hop] end)
+  # def get_n_hops_from_city(city, routes, count) do
+  #     # Stream.unfold(routes[city], fn )
+  #     1..count
+  #     |> Enum.map
+  #     [router(city), routes]
+  # end
 
-    merge_hops(routes, city, next_hops)
+  def route_hops(city, routes) when is_list(city) do
+    {:error, "Invalid input.  Enter a city name"}
+  end
+
+  def route_hops(city, routes) do
+    # [city | [router(city, routes)]] |> List.flatten |> Enum.uniq
+    nodes = router(city, routes)
+    visited = [city]
+
+    IO.puts "First City: #{inspect city}, Visited: #{inspect visited}"
+    nodes |> route_hops(routes, visited)
+  end
+
+  defp route_hops(cities, routes, visited) when is_list(cities) do
+    to_visit = Enum.filter(cities, fn(city) -> city not in visited end)
+    IO.puts "Cities to visit: #{inspect to_visit}, Visited: #{inspect visited}"
+    if Enum.empty? to_visit do
+      IO.puts "\n\nAll cities visited for route.  #{inspect visited}"
+      visited |> Enum.reverse    
+    else
+      Enum.map(to_visit, &route_hops(&1, routes, visited))
+    end
+  end
+
+  defp route_hops(city, routes, visited) do
+    IO.puts "\nNext City: #{inspect city}, Visited: #{inspect visited}"
+    new_visited = [city | visited ]
+    nodes = router(city, routes)
+    IO.puts "Next call: #{inspect nodes}, New Visited: #{inspect new_visited}"
+    route_hops(nodes, routes, new_visited)
+  end
+
+  def router(key, map) when is_list(key) do
+    key 
+    |> Enum.map(fn city -> router(city, map) end)
+    |> List.flatten
+    |> Enum.uniq
+  end
+
+  def router(key, map) do
+    case map[key] do
+      nil -> "City not in portal system"
+      [conn | []] -> conn
+      [h | t] -> [h|t]
+    end
+  end
+
+
+  def get_hops(routes, city) do
+    next_hop =
+      routes[city] 
+      |> Enum.map(fn hop -> routes[hop] end)
+      |> List.flatten
+    IO.puts "\nhops to merge: #{inspect next_hop}"
+    merge_hops(routes, city, next_hop)
   end
 
   def get_hops(routes, city, current_hops) do
     [ get_hops(routes, city) | current_hops]
   end
 
-  def merge_hops(routes, city, next_hops) do
-    all_hops = routes[city] ++ next_hops
-    List.flatten(all_hops)
-    |> Enum.uniq
+  def merge_hops(routes, city, next_hop) do
+    MapSet.union(MapSet.new(routes[city]),MapSet.new(next_hop))
+    |> MapSet.to_list
     |> (Kernel.-- [city])
+    # all_hops = routes[city] ++ next_hop
+    # List.flatten(all_hops)
+    # |> Enum.uniq
+    # |> (Kernel.-- [city])
   end
 
   def can_beam_to_city?(routes, current_city, desired_city) do
-    cities = routes["port_routes"] |> Enum.map fn {k,v} -> v.route_path end
+    cities = routes["port_routes"] |> Enum.map(fn {_k,v} -> v.route_path end)
     results = route_finder(cities, current_city, desired_city)
     true in results
+  end
+
+  def loop_possible?(routes, city) do
+    true 
   end
 
   def route_finder(city_list, current_city, desired_city) do

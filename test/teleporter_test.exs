@@ -206,9 +206,10 @@ defmodule TeleporterTest do
     }
 
     assert Teleporter.can_beam_to_city?(routes, "New York", "Atlanta") == true
+    assert Teleporter.can_beam_to_city?(routes, "Oakland", "Atlanta") == false
   end
 
-  test "Can I hop to city from a Oakland to Atlanta" do
+  test "router with string input" do
     routes = %{
       "Atlanta" => ["Washington"],
       "Baltimore" => ["Seattle", "Philadelphia", "Washington"],
@@ -230,7 +231,63 @@ defmodule TeleporterTest do
         }
       }
     }
-
-    assert Teleporter.can_beam_to_city?(routes, "Oakland", "Atlanta") == false
+    assert Teleporter.router("Atlanta", routes) == "Washington"
+    assert Teleporter.route_hops("Atlanta", routes) == ["Atlanta","Washington"]
   end
+
+  test "router with list input" do
+    routes = %{
+      "Atlanta" => ["Washington"],
+      "Baltimore" => ["Seattle", "Philadelphia", "Washington"],
+      "Los Angeles" => ["Oakland", "San Francisco"],
+      "New York" => ["Seattle", "Philadelphia"],
+      "Oakland" => ["Los Angeles", "San Francisco"],
+      "Philadelphia" => ["New York", "Baltimore"],
+      "San Francisco" => ["Oakland", "Los Angeles"],
+      "Seattle" => ["Baltimore", "New York"],
+      "Washington" => ["Atlanta", "Baltimore"],
+      "cities_in_system" => ["Atlanta", "Baltimore", "Los Angeles",
+       "New York", "Oakland", "Philadelphia", "San Francisco",
+       "Seattle", "Washington"],
+      "port_routes" => %{
+        "1" => %{route_path: ["Atlanta", "Baltimore", "New York",
+           "Philadelphia", "Seattle", "Washington"]
+        },
+        "2" => %{route_path: ["Los Angeles", "Oakland", "San Francisco"]
+        }
+      }
+    }
+    test_list = ["Washington", "Seattle"]
+    assert Teleporter.router(test_list, routes) ==  ["Atlanta", "Baltimore", "New York"]
+
+    test_list2= ["Washington"]
+    assert Teleporter.router(test_list2, routes) ==  ["Atlanta", "Baltimore"]
+    assert Teleporter.route_hops(test_list2, routes) ==  {:error, "Invalid input.  Enter a city name"}
+  end
+
+  # test "Loop possible from city with odd numbered route loop" do
+  #   routes = %{
+  #     "Atlanta" => ["Washington"],
+  #     "Baltimore" => ["Seattle", "Philadelphia", "Washington"],
+  #     "Los Angeles" => ["Oakland", "San Francisco"],
+  #     "New York" => ["Seattle", "Philadelphia"],
+  #     "Oakland" => ["Los Angeles", "San Francisco"],
+  #     "Philadelphia" => ["New York", "Baltimore"],
+  #     "San Francisco" => ["Oakland", "Los Angeles"],
+  #     "Seattle" => ["Baltimore", "New York"],
+  #     "Washington" => ["Atlanta", "Baltimore"],
+  #     "cities_in_system" => ["Atlanta", "Baltimore", "Los Angeles",
+  #      "New York", "Oakland", "Philadelphia", "San Francisco",
+  #      "Seattle", "Washington"],
+  #     "port_routes" => %{
+  #       "1" => %{route_path: ["Atlanta", "Baltimore", "New York",
+  #          "Philadelphia", "Seattle", "Washington"]
+  #       },
+  #       "2" => %{route_path: ["Los Angeles", "Oakland", "San Francisco"]
+  #       }
+  #     }
+  #   }
+  #   assert Teleporter.loop_possible?(routes, "Oakland") == true
+
+  # end
 end
