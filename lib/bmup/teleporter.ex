@@ -178,8 +178,8 @@ defmodule Bmup.Teleporter do
   def router(key, map) do
     case map[key] do
       nil -> "City not in portal system"
-      [conn | []] -> conn
-      [h | t] -> [h|t]
+      # [conn | []] -> conn
+      conn -> conn
     end
   end
 
