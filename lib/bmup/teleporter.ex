@@ -145,31 +145,27 @@ defmodule Bmup.Teleporter do
   end
 
   def route_hops(city, routes) do
-    # [city | [router(city, routes)]] |> List.flatten |> Enum.uniq
     nodes = router(city, routes)
     visited = [city]
 
-    IO.puts "First City: #{inspect city}, Visited: #{inspect visited}"
-    nodes |> route_hops(routes, visited)
+    nodes |> route_hops(routes, visited, %{}) |> List.flatten
   end
 
-  defp route_hops(cities, routes, visited) when is_list(cities) do
+  defp route_hops(cities, routes, visited, route_choice) when is_list(cities) do
     to_visit = Enum.filter(cities, fn(city) -> city not in visited end)
-    IO.puts "Cities to visit: #{inspect to_visit}, Visited: #{inspect visited}"
     if Enum.empty? to_visit do
-      IO.puts "\n\nAll cities visited for route.  #{inspect visited}"
-      visited |> Enum.reverse    
+      original_order = visited |> Enum.reverse
+      key = List.first(original_order) <> "-to-" <> List.last(original_order) 
+      Map.put_new(route_choice, key, original_order)
     else
-      Enum.map(to_visit, &route_hops(&1, routes, visited))
+      Enum.map(to_visit, &route_hops(&1, routes, visited, route_choice)) 
     end
   end
 
-  defp route_hops(city, routes, visited) do
-    IO.puts "\nNext City: #{inspect city}, Visited: #{inspect visited}"
+  defp route_hops(city, routes, visited, route_choice) do
     new_visited = [city | visited ]
     nodes = router(city, routes)
-    IO.puts "Next call: #{inspect nodes}, New Visited: #{inspect new_visited}"
-    route_hops(nodes, routes, new_visited)
+    route_hops(nodes, routes, new_visited, route_choice)
   end
 
   def router(key, map) when is_list(key) do
@@ -193,7 +189,6 @@ defmodule Bmup.Teleporter do
       routes[city] 
       |> Enum.map(fn hop -> routes[hop] end)
       |> List.flatten
-    IO.puts "\nhops to merge: #{inspect next_hop}"
     merge_hops(routes, city, next_hop)
   end
 
